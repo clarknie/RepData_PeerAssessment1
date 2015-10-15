@@ -1,12 +1,8 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 ## Loading and preprocessing the data
-```{r}
+
+```r
 activity <- read.csv('./activity.csv', header = TRUE)
 # transform the factor date into actual date
 activity <- transform(activity, date = as.POSIXct(strptime(date, format = "%Y-%m-%d")))
@@ -17,7 +13,8 @@ activity <- transform(activity, date = as.POSIXct(strptime(date, format = "%Y-%m
 
 1. Calculate the total number of steps taken per day
 
-```{r message=F}
+
+```r
 library(dplyr)
 #with(activity, tapply(steps, as.factor(date), sum))
 total_step_per_day <- activity %>% 
@@ -26,21 +23,42 @@ total_step_per_day <- activity %>%
 total_step_per_day
 ```
 
+```
+## Source: local data frame [61 x 2]
+## 
+##          date total_steps
+## 1  2012-10-01           0
+## 2  2012-10-02         126
+## 3  2012-10-03       11352
+## 4  2012-10-04       12116
+## 5  2012-10-05       13294
+## 6  2012-10-06       15420
+## 7  2012-10-07       11015
+## 8  2012-10-08           0
+## 9  2012-10-09       12811
+## 10 2012-10-10        9900
+## ..        ...         ...
+```
+
 2. If you do not understand the difference between a histogram and a barplot, research the difference between them. Make a histogram of the total number of steps taken each day
 
-```{r}
+
+```r
 hist(total_step_per_day$total_steps)
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
 
 
 3. Calculate and report the mean and median of the total number of steps taken per day
 
-```{r}
+
+```r
 # summary(total_step_per_day$total_steps)
 total_mean <- mean(total_step_per_day$total_steps)
 total_median <- median(total_step_per_day$total_steps)
 ```
-The mean and the median are `r total_mean` and `r total_median` separately.
+The mean and the median are 9354.2295082 and 10395 separately.
 
 
 
@@ -48,19 +66,23 @@ The mean and the median are `r total_mean` and `r total_median` separately.
 
 1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
-```{r}
+
+```r
 avg_step_per_interval <- activity %>% 
     group_by(interval) %>% 
     summarize(avg_steps = mean(steps, na.rm = TRUE))
 with(avg_step_per_interval, plot(interval, avg_steps, type = "l", xlab = "Time", ylab = "Average number of steps"))
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png) 
+
 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
-```{r}
+
+```r
 max_interval <- with(avg_step_per_interval, interval[which(avg_steps == max(avg_steps))])
 ```
-The interval `r max_interval` has the maximum number of steps.
+The interval 835 has the maximum number of steps.
 
 
 
@@ -70,11 +92,11 @@ Note that there are a number of days/intervals where there are missing values (c
 
 1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
 
-```{r}
-missingNum <- sum(is.na(activity$steps))
 
+```r
+missingNum <- sum(is.na(activity$steps))
 ```
-The total number of missing values are `r missingNum`.
+The total number of missing values are 2304.
 
 2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
 
@@ -83,22 +105,28 @@ The strategy that I use is to use the mean for that 5-minute interval to impute 
 3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
 
 The new dataset is activity_impute. 
-```{r}
+
+```r
 activity_impute <- activity
 # use mean of that 5 minute interval to impute the missing values
 # iterate over all 288 5-minute intervals and impute
 for (int in avg_step_per_interval$interval){
  activity_impute$steps[is.na(activity_impute$steps) & activity_impute$interval == int] = with(avg_step_per_interval, avg_steps[interval==int])
 }
-
 ```
 
 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
 
-```{r}
+
+```r
 total_step_per_day_impute <- activity_impute %>% group_by(date) %>% summarize(total_steps = sum(steps, na.rm = TRUE))
 hist(total_step_per_day_impute$total_steps)
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-9-1.png) 
+
+```r
 #summary(total_step_per_day_impute$total_steps)
 total_mean_new <- mean(total_step_per_day_impute$total_steps)
 total_median_new <- median(total_step_per_day_impute$total_steps)
@@ -112,13 +140,15 @@ For this part the weekdays() function may be of some help here. Use the dataset 
 
 1. Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
 
-```{r}
+
+```r
 activity_impute <- transform(activity_impute, weekDayorEnd = ifelse(weekdays(date) == "Saturday" | weekdays(date) == "Sunday", "weekend", "weekday" ))
 ```
 
 2. Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
 
-```{r}
+
+```r
 avg_step_per_interval_weekDayorEnd <- 
     activity_impute %>%  
     group_by(interval, weekDayorEnd)  %>% 
@@ -127,5 +157,7 @@ avg_step_per_interval_weekDayorEnd <-
 library(lattice)
 xyplot(avg_step ~ interval | weekDayorEnd, data = avg_step_per_interval_weekDayorEnd, layout = c(1,2), type = 'l')
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-11-1.png) 
 
 From the two panels, we see that weekend activity during the day is more evenly distributed while the weekday activity has some spikes during the morning. Moreover, the user probably gets up later and sleepr later in weekends compared to in weekdays.  
